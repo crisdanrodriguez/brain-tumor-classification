@@ -1,129 +1,59 @@
 # Brain Tumor Classification
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-0A66C2?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.5%2B-0A66C2?style=flat-square&logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
-[![Tests](https://img.shields.io/github/actions/workflow/status/crisdanrodriguez/brain_tumor_classification/tests.yml?style=flat-square&logo=githubactions&logoColor=white&label=Tests)](https://github.com/crisdanrodriguez/brain_tumor_classification/actions/workflows/tests.yml)
-[![License](https://img.shields.io/badge/License-MIT-0A66C2?style=flat-square&logo=opensourceinitiative&logoColor=white)](./LICENSE)
+An experimental Python project that classifies brain MRI images into four categories using handcrafted image features and stacking ensembles.
 
-Handcrafted texture-feature extraction and stacking-based brain tumor classification on MRI images.
+[![Tests](https://github.com/crisdanrodriguez/brain-tumor-classification/actions/workflows/tests.yml/badge.svg)](https://github.com/crisdanrodriguez/brain-tumor-classification/actions/workflows/tests.yml) [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.5%2B-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Last commit](https://img.shields.io/github/last-commit/crisdanrodriguez/brain-tumor-classification?label=last%20commit)](https://github.com/crisdanrodriguez/brain-tumor-classification/commits/main/)
 
-## Table of Contents
-- [Overview](#overview)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Results](#results)
-- [Documentation](#documentation)
-- [Development](#development)
-- [License](#license)
-- [AI Assistance and Last Updated](#ai-assistance-and-last-updated)
+**Created:** 2021-11-13 | **Last Updated:** 2026-04-19
 
 ## Overview
 
-This repository is a machine learning and applied data science project focused on classifying brain tumor MRI images into four classes:
+This academic machine learning project explores classification of MRI images labeled `no_tumor`, `glioma_tumor`, `meningioma_tumor`, or `pituitary_tumor`. It uses image statistics and gray-level co-occurrence matrix (GLCM) texture features as an alternative to learning features with a neural network.
 
-- `no_tumor`
-- `glioma_tumor`
-- `meningioma_tumor`
-- `pituitary_tumor`
+The repository includes the training and testing images, a precomputed feature table, a scikit-learn model comparison, a separate manual stacking implementation, exploratory analysis, and a project report. It is intended for studying feature engineering and ensemble methods; the repository does not establish clinical suitability.
 
-The project works with engineered image features instead of deep learning. It includes:
+## Key Features
 
-- A feature extraction pipeline based on first-order statistics and GLCM texture descriptors
-- A stacking implementation built with `scikit-learn`
-- A manual stacking implementation that recreates the ensemble logic from scratch
-- An exploratory notebook for analysis of the engineered dataset
+- Extracts 12 numeric features per image: six pixel-distribution statistics and six GLCM texture properties.
+- Compares k-nearest neighbors, decision tree, Gaussian naive Bayes, and a stacking ensemble using scikit-learn.
+- Implements the three base learners and stacking prediction logic separately in Python, with an interactive image-path prompt.
+- Includes a precomputed CSV, exploratory notebook, three smoke tests, and a GitHub Actions test workflow.
 
-The repository currently contains the image dataset under [`data/`](./data), the derived feature table at [`data/brain_tumor_dataset.csv`](./data/brain_tumor_dataset.csv), the Python package under [`src/`](./src), complementary material under [`docs/`](./docs), and basic automated tests under [`tests/`](./tests).
+## Tech Stack
 
-## Installation
+- **Language:** Python 3.10 or newer.
+- **Data and imaging:** NumPy, pandas, SciPy, and scikit-image.
+- **Models and evaluation:** scikit-learn.
+- **Exploration and testing:** Jupyter, Matplotlib, `unittest`, and GitHub Actions.
 
-### Requirements
+Minimum package versions are specified in [`pyproject.toml`](pyproject.toml); [`requirements.txt`](requirements.txt) installs the local package with its development extras.
 
-- Python `3.10+`
-- `pip`
+## Methodology
 
-### Setup
+[`feature_extraction.py`](src/brain_tumor_classification/feature_extraction.py) converts each image to grayscale, resizes it to 512 × 512 pixels, and calculates mean, variance, standard deviation, skewness, kurtosis, entropy, contrast, dissimilarity, homogeneity, angular second moment, energy, and correlation. Class directory names provide the numeric labels. The committed [`feature table`](data/brain_tumor_dataset.csv) has 3,206 rows and is built from `data/Training/`.
+
+[`stacking_sklearn.py`](src/brain_tumor_classification/stacking_sklearn.py) compares three base classifiers with a stacking classifier whose final estimator is k-nearest neighbors. It evaluates accuracy with five-fold stratified cross-validation repeated four times. [`stacking_from_scratch.py`](src/brain_tumor_classification/stacking_from_scratch.py) uses repeated stratified 80/20 train/test splits and trains its meta learner on predictions made over the same training rows used to fit the base learners. That design can make its reported scores optimistic and means the two implementations should not be treated as a controlled, like-for-like comparison. The bundled `data/Testing/` images are used by a smoke test but are not the holdout set in either evaluation script.
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.10 or newer and `pip`.
+- The bundled image data if rebuilding the feature table or using image-path prediction.
+
+### Install
+
+From the repository root:
 
 ```bash
-git clone https://github.com/crisdanrodriguez/brain_tumor_classification.git
-cd brain_tumor_classification
-
+git clone https://github.com/crisdanrodriguez/brain-tumor-classification.git
+cd brain-tumor-classification
 python -m venv .venv
 source .venv/bin/activate
-
-pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-## Usage
-
-### Generate the engineered feature dataset
-
-Rebuilds [`data/brain_tumor_dataset.csv`](./data/brain_tumor_dataset.csv) from the training images in [`data/Training`](./data/Training).
-
-```bash
-python -m brain_tumor_classification.feature_extraction
-```
-
-### Run the scikit-learn stacking benchmark
-
-Evaluates the baseline models and the stacking ensemble with repeated stratified cross-validation.
-
-```bash
-python -m brain_tumor_classification.stacking_sklearn
-```
-
-### Run the manual stacking implementation
-
-Runs the from-scratch ensemble workflow and opens an interactive prompt for predicting a new image path.
-
-```bash
-python -m brain_tumor_classification.stacking_from_scratch
-```
-
-### Open the exploratory notebook
-
-```bash
-jupyter notebook notebooks/eda.ipynb
-```
-
-## Project Structure
-
-```text
-brain_tumor_classification/
-├── .github/                         # CI workflow and collaboration templates
-├── data/                            # MRI images and engineered feature dataset
-├── docs/
-│   ├── documentation/               # Technical report and reference material
-│   └── results/                     # Presentation assets and project outputs
-├── notebooks/                       # Exploratory analysis notebook
-├── src/brain_tumor_classification/  # Main Python package
-├── tests/                           # Basic smoke tests
-├── LICENSE
-├── README.md
-├── pyproject.toml
-└── requirements.txt
-```
-
-## Results
-
-The project compares three base learners, `KNN`, `Decision Tree`, and `Gaussian Naive Bayes`, against a stacking ensemble built on the same engineered feature space.
-
-Relevant result material:
-
-- [Project presentation](./docs/results/btc_presentation.pptx)
-
-## Documentation
-
-Additional technical and explanatory material is grouped under [`docs/`](./docs) and [`notebooks/`](./notebooks):
-
-- [Technical report](./docs/documentation/brain_tumor_classification_with_stacking_method.pdf)
-- [Implementation diagram](./docs/documentation/implementation_diagram.png)
-- [EDA notebook](./notebooks/eda.ipynb)
-- [Towards AI article](https://towardsai.net/p/l/stacking-ensemble-method-for-brain-tumor-classification-performance-analysis)
-
-## Development
+On Windows, activate the environment with `.venv\Scripts\activate` instead.
 
 ### Run tests
 
@@ -131,18 +61,67 @@ Additional technical and explanatory material is grouped under [`docs/`](./docs)
 python -m unittest discover -s tests -v
 ```
 
-### Notes
+The tests check the committed CSV shape, model construction, and feature extraction on one bundled image. They do not validate the reported model accuracies.
 
-- The repository keeps the current dataset inside version control because it is part of the project deliverable.
-- Feature extraction is intentionally separated from module import time, so tests and CI can import the package safely.
-- The `requirements.txt` file installs the local package plus notebook-oriented extras defined in [`pyproject.toml`](./pyproject.toml).
+## Usage
+
+Run these commands from the repository root after installation:
+
+```bash
+# Compare scikit-learn models using the committed feature table.
+python -m brain_tumor_classification.stacking_sklearn
+
+# Evaluate the manual implementation, then enter an image path when prompted.
+python -m brain_tumor_classification.stacking_from_scratch
+
+# Open the exploratory notebook.
+jupyter notebook notebooks/eda.ipynb
+```
+
+To regenerate the CSV from `data/Training/`, run the following command. It **overwrites the tracked feature table**; the current extraction code also writes an index column that the model loaders expect.
+
+```bash
+python -m brain_tumor_classification.feature_extraction
+```
+
+The notebook reads `data/brain_tumor_dataset.csv` relative to the working directory, so launch Jupyter from the repository root. It also imports seaborn, which is not declared in the project dependencies; install it separately if you intend to run the notebook cells.
+
+## Project Structure
+
+```text
+brain-tumor-classification/
+├── .github/workflows/tests.yml            # Python 3.10–3.12 test matrix
+├── data/
+│   ├── Training/                          # Images used to generate features
+│   ├── Testing/                           # Separate bundled images
+│   └── brain_tumor_dataset.csv             # Precomputed training features
+├── docs/
+│   ├── documentation/                     # Report and implementation diagram
+│   └── results/                           # Project presentation
+├── notebooks/eda.ipynb                    # Exploratory analysis
+├── src/brain_tumor_classification/        # Extraction and model modules
+├── tests/test_basic.py                    # Smoke tests
+├── pyproject.toml                         # Package metadata and dependencies
+└── requirements.txt                       # Editable install with dev extras
+```
+
+## Results and Demonstration
+
+The [project presentation](docs/results/btc_presentation.pptx) reports these historical accuracies:
+
+| Model | Manual implementation | scikit-learn implementation |
+| --- | ---: | ---: |
+| k-nearest neighbors | 58.28% | 59.55% |
+| Gaussian naive Bayes | 55.65% | 54.02% |
+| Decision tree | 73.21% | 68.75% |
+| Stacking | 66.98% | 65.21% |
+
+These are figures from the presentation, not measurements reproduced during this documentation update. The presentation describes 11 features, while the current extraction code produces 12; the current scripts also use different evaluation procedures. The manual stacking workflow trains meta features on in-sample base-model predictions. See the [technical report](docs/documentation/brain_tumor_classification_with_stacking_method.pdf), [implementation diagram](docs/documentation/implementation_diagram.png), [EDA notebook](notebooks/eda.ipynb), and [related article](https://towardsai.net/p/l/stacking-ensemble-method-for-brain-tumor-classification-performance-analysis) for additional project material.
+
+## Project Status
+
+Experimental academic project. The repository provides code, data, and historical presentation material, but its evaluation results have not been independently reproduced here. The latest default-branch commit is a documentation update dated 2026-04-19; this alone does not establish ongoing model development.
 
 ## License
 
-This project is licensed under the MIT License. See [`LICENSE`](./LICENSE) for details.
-
-## AI Assistance and Last Updated
-
-This repository includes AI-assisted improvements focused on refactoring, documentation cleanup, test scaffolding, and repository presentation. The model-assisted work was used to improve maintainability and consistency, while keeping the project aligned with its existing scope.
-
-Last updated: April 19, 2026.
+Licensed under the [MIT License](LICENSE).
